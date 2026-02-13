@@ -106,7 +106,7 @@ def limpar_bairro():
 
 @st.cache_data # Para o site ficar rápido
 def carregar_dados():
-    conexao = sqlite3.connect('/home/laurogobatto/DSA_Linux/data/radar_alugueis.db')
+    conexao = sqlite3.connect('data/processed/radar_alugueis.db')
     query = "SELECT * FROM bairros"
     banco_de_dados = pd.read_sql_query(query, conexao)
     conexao.close()
