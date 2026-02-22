@@ -1,17 +1,12 @@
-# Bibliotecas de Coleta e Web
-requests==2.31.0
-beautifulsoup4
-urllib3==2.0.7
-
-# Bibliotecas de Dados e ML
-pandas
-numpy
-scikit-learn
-
-# Bibliotecas de Visualização e Deploy
-streamlit
-plotly
-
-# Auxiliares que estavam na sua lista e são úteis
-PyYAML==6.0.1
-python-dotenv
+folium==0.20.0
+geopy==2.4.1
+imbalanced_learn==0.14.1
+matplotlib==3.10.8
+numpy==2.4.2
+pandas==3.0.1
+playwright==1.57.0
+plotly==6.5.2
+scikit_learn==1.8.0
+seaborn==0.13.2
+streamlit==1.53.1
+streamlit_folium==0.26.1
