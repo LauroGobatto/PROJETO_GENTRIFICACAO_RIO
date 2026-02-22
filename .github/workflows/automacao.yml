@@ -1,0 +1,32 @@
+name: Monitoramento Diario de Alugueis
+
+on:
+  schedule:
+    - cron: '0 8 * * *' # Roda todo dia às 08:00 da manhã
+  workflow_dispatch: # Permite que você rode manualmente pelo site do GitHub
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar codigo do repositorio
+        uses: actions/checkout@v4
+
+      - name: Instalar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Instalar bibliotecas
+        run: pip install -r requirements.txt
+
+      - name: Executar Scraping e Limpeza
+        run: python main.py
+
+      - name: Atualizar Banco de Dados
+        run: |
+          git config --global LauroGobatto "GitHub Action"
+          git config --global user.email "action@github.com"
+          git add dados_atualizados.csv
+          git commit -m "Dados atualizados automaticamente"
+          git push

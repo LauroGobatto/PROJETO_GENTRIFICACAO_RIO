@@ -1,5 +1,6 @@
 from geopy.geocoders import Nominatim
 import pandas as pd 
+import os
 
 df_riscos = pd.read_csv('data/processed/RISCO DE GENTRIFICAÇÃO.csv')
 
@@ -14,4 +15,5 @@ for bairro in df_riscos['BAIRRO']:
 df_riscos['LATITUDE'] = coluna_latitude
 df_riscos['LONGITUDE'] = coluna_longitude
 
-df_riscos.to_csv('COORDENADAS.csv', index = False)
+caminho_csv = os.path.join('data', 'raw', 'COORDENADAS.csv')
+df_riscos.to_csv(caminho_csv, index= False)

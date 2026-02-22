@@ -4,12 +4,10 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import VotingClassifier, GradientBoostingClassifier
 from sklearn.metrics import classification_report
-from sklearn.cluster import KMeans
-from sklearn.preprocessing import StandardScaler
 from imblearn.over_sampling import SMOTE
-import numpy as np
+import os
 
-df = pd.read_csv('data/processed/BAIRROS_RENDA.csv')
+df = pd.read_csv('data/processed/BAIRROS_RENDA_TOTAL.csv')
 
 media_renda = df['RENDA MENSAL'].mean()
 media_preco = df['PREÇO POR METRO'].mean()
@@ -87,35 +85,6 @@ df = df.drop(columns= ['RISCO_TARGET'])
 df = df.sort_values(by='RISCO ALTO', ascending=False).reset_index(drop = True)
 print("\n--- RADAR DE GENTRIFICAÇÃO (RISCO 2) ---")
 print(df.to_string())
-df.to_csv('RISCO DE GENTRIFICAÇÃO.csv', index= False)
 
-# 1. Extrair as importâncias de cada modelo individualmente
-imp_rf = modelo.estimators_[0].feature_importances_
-imp_gb = modelo.estimators_[1].feature_importances_
-
-# 2. Calcular a média das importâncias entre os dois modelos
-importancias_medias = np.mean([imp_rf, imp_gb], axis=0)
-
-# 3. Criar o DataFrame de visualização
-# X.columns contém as 8 colunas que você definiu como features
-df_importancia = pd.DataFrame({
-    'Feature': X.columns,
-    'Importancia': importancias_medias
-})
-
-# 4. Ordenar do maior para o menor
-df_importancia = df_importancia.sort_values(by='Importancia', ascending=False)
-
-print("\n--- PESO DE CADA VARIÁVEL NO MODELO ---")
-print(df_importancia)
-
-kmeans = KMeans(n_clusters = 3, random_state = 42, n_init = 10)
-grupos = kmeans.fit_predict(features)
-
-
-df['GRUPOS'] = grupos
-
-analise_clusters = df.groupby('GRUPOS')[['PREÇO POR METRO', 'ÍNDICE DE PRESSÃO', 'ÁREA TERRITORIAL DISPONÍVEL', 'RENDA MENSAL', 'ÍNDICE DE ACESSIBILIDADE', 'SCORE FINAL']].mean()
-
-print("--- PERFIL MÉDIO DE CADA GRUPO ---")
-print(analise_clusters)
+caminho_csv = os.path.join('data', 'processed', 'RISCO DE GENTRIFICAÇÃO.csv')
+df.to_csv(caminho_csv, index= False)
