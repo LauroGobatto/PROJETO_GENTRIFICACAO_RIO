@@ -19,6 +19,9 @@ jobs:
 
       - name: Instalar bibliotecas
         run: pip install -r requirements.txt
+    
+      - name: Instalar Navegadores do Playwright
+        run: npx playwright install --with-deps chromium
 
       - name: Executar Scraping e Limpeza
         run: python main.py
