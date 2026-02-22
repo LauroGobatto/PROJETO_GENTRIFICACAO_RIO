@@ -1,9 +1,9 @@
-name: Monitoramento Diario de Alugueis
+name: Monitoramento Mensal da Gentrificação no Rio de Janeiro
 
 on:
   schedule:
-    - cron: '0 8 * * *' # Roda todo dia às 08:00 da manhã
-  workflow_dispatch: # Permite que você rode manualmente pelo site do GitHub
+    - cron: '0 0 28  * *'
+  workflow_dispatch:
 
 jobs:
   build:
@@ -25,8 +25,8 @@ jobs:
 
       - name: Atualizar Banco de Dados
         run: |
-          git config --global LauroGobatto "GitHub Action"
-          git config --global user.email "action@github.com"
-          git add dados_atualizados.csv
+          git config --global user.name "LauroGobatto"
+          git config --global user.email "lauroz1232@gmail.com"
+          git add .
           git commit -m "Dados atualizados automaticamente"
           git push
