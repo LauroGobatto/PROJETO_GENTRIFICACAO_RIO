@@ -25,7 +25,7 @@ async def scrapper_final():
 	df_precos_bairro.to_csv(caminho_csv, index=False)
 
 	# 3. ATUALIZAR O TOTAL (Este aqui junta o novo com o que já existia)
-	arquivo_total = 'data/processed/PRECO_POR_BAIRRO_TOTAL.csv'
+	arquivo_total = 'data/processed/PREÇO_POR_BAIRRO_TOTAL.csv'
 
 	df_antigo = pd.read_csv(arquivo_total)
 	df_acumulado = pd.concat([df_antigo, df_precos_bairro]).drop_duplicates()
