@@ -1,6 +1,7 @@
 from geopy.geocoders import Nominatim
 import pandas as pd 
 import os
+import time
 
 df_riscos = pd.read_csv('data/processed/RISCO DE GENTRIFICAÇÃO.csv')
 df_coordenadas = pd.read_csv('data/raw/COORDENADAS.csv')
@@ -9,12 +10,14 @@ df_novo = pd.DataFrame()
 coluna_bairro = []
 coluna_latitude = []
 coluna_longitude = []
-for bairro in df_riscos['BAIRRO']:
+coordenadas = df_coordenadas['BAIRRO'].to_list
+for bairro in coordenadas:
     if bairro not in df_coordenadas['BAIRRO']:
         local = geolocator.geocode(f"{bairro}, Rio de Janeiro")
         coluna_bairro.append(bairro)
         coluna_latitude.append(local.latitude)
         coluna_longitude.append(local.longitude)
+        time.sleep(1)
 
 if not coluna_bairro.isna():
     df_novo['BAIRRO'] = coluna_bairro
