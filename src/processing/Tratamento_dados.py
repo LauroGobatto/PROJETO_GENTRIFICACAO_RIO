@@ -12,7 +12,10 @@ diretorio_atual = os.path.dirname(os.path.abspath(__file__))
 raiz = os.path.dirname(os.path.dirname(diretorio_atual))
 
 for i in arquivos:
-    webscrappingfinal = pd.read_csv(f'data/processed/PREÇO_POR_BAIRRO_{i}.csv')
+    if i == 'TOTAL':
+        webscrappingfinal = pd.read_csv(f'data/processed/PREÇO_POR_BAIRRO_TOTAL.csv')
+    else:
+        webscrappingfinal = pd.read_csv(f'data/processed/monthly/PREÇO_POR_BAIRRO_{i}.csv')
     df_iptu_residencial['nome'] = df_iptu_residencial['nome'].str.strip()
     df_iptu_residencial = df_iptu_residencial.rename(columns= {
         'nome': 'BAIRRO',
