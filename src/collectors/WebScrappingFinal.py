@@ -16,12 +16,10 @@ async def scrapper_final():
 	df_alugueis['PREÇO POR METRO'] = (df_alugueis['PREÇO'] / df_alugueis['ÁREA']).round(1)
 	df_precos_bairro = df_alugueis.groupby('BAIRRO')['PREÇO POR METRO'].median().reset_index()
 	
-	diretorio_atual = os.path.dirname(os.path.abspath(__file__))
-	
 	# 1. Definir o nome do mês atual para o arquivo individual
 	mes_ano = datetime.now().strftime('%Y_%m') 
 
-	caminho_csv = os.path.join('data', 'processed', 'monthly', f'PRECO_POR_BAIRRO_{mes_ano}.csv')
+	caminho_csv = os.path.join('data', 'processed', 'monthly', f'PREÇO_POR_BAIRRO_{mes_ano}.csv')
 	df_precos_bairro.to_csv(caminho_csv, index=False)
 
 	# 3. ATUALIZAR O TOTAL (Este aqui junta o novo com o que já existia)
