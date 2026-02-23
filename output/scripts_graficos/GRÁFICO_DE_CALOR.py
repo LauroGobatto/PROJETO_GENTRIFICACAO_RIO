@@ -10,16 +10,17 @@ df_novo = pd.DataFrame()
 coluna_bairro = []
 coluna_latitude = []
 coluna_longitude = []
-coordenadas = df_coordenadas['BAIRRO'].to_list
+coordenadas = df_riscos['BAIRRO'].unique().tolist()
 for bairro in coordenadas:
-    if bairro not in df_coordenadas['BAIRRO']:
+    if bairro not in df_coordenadas['BAIRRO'].values:
         local = geolocator.geocode(f"{bairro}, Rio de Janeiro")
-        coluna_bairro.append(bairro)
-        coluna_latitude.append(local.latitude)
-        coluna_longitude.append(local.longitude)
-        time.sleep(1)
+        if local: 
+            coluna_bairro.append(bairro)
+            coluna_latitude.append(local.latitude)
+            coluna_longitude.append(local.longitude)
+            time.sleep(1)
 
-if not coluna_bairro.isna():
+if len(coluna_bairro) > 0:
     df_novo['BAIRRO'] = coluna_bairro
     df_novo['LATITUDE'] = coluna_latitude
     df_novo['LONGITUDE'] = coluna_longitude
