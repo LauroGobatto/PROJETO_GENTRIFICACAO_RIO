@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import os
-import datetime
+from datetime import datetime
 
 
 df_iptu_residencial = pd.read_csv('data/raw/IPTU_RESIDENCIAL.csv')
