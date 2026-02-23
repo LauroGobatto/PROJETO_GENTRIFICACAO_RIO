@@ -116,27 +116,28 @@ df = carregar_dados()
 
 df_mapa = carregar_dados_mapa()
 
-colunas_radar = ['RENDA_MENSAL', 'PREÇO_POR_METRO', 'TX_ESFORCO', 'MAGNITUDE', 'AREA_TERRITORIAL_DISPONIVEL', 'UNIDADES_RESIDENCIAIS', 'INDICE_DE_PRESSAO']
+df.columns = ['BAIRRO', 'PREÇO POR METRO QUADRADO', 'UNIDADES RESIDENCIAIS', 'ÍNDICE DE PRESSÃO', 'ÁREA TERRITORIAL DISPONÍVEL', 'MAGNITUDE', 'RENDA MENSAL', 'TAXA DE ESFORÇO', 'RISCO DE GENTRIFICAÇÃO']
+colunas_radar = ['RENDA MENSAL', 'PREÇO POR METRO QUADRADO', 'TAXA DE ESFORÇO', 'MAGNITUDE', 'ÁREA TERRITORIAL DISPONÍVEL', 'UNIDADES RESIDENCIAIS', 'ÍNDICE DE PRESSÃO']
 df_normalizado = normalizar_dados(df, colunas_radar)
 
-media_renda = df['RENDA_MENSAL'].mean()
-media_preco = df['PREÇO_POR_METRO'].mean()
-area_maior85 = df['AREA_TERRITORIAL_DISPONIVEL'].quantile(0.85)
+media_renda = df['RENDA MENSAL'].mean()
+media_preco = df['PREÇO POR METRO QUADRADO'].mean()
+area_maior85 = df['ÁREA TERRITORIAL DISPONÍVEL'].quantile(0.85)
 mediana_magnitude = df['MAGNITUDE'].median()
-mediana_pressao = df['INDICE_DE_PRESSAO'].median()
-preco_maior80 = df['PREÇO_POR_METRO'].quantile(0.80)
-renda_maior80 = df['RENDA_MENSAL'].quantile(0.80)
-area_menor50 = df['AREA_TERRITORIAL_DISPONIVEL'].quantile(0.50)
+mediana_pressao = df['ÍNDICE DE PRESSÃO'].median()
+preco_maior80 = df['PREÇO POR METRO QUADRADO'].quantile(0.80)
+renda_maior80 = df['RENDA MENSAL'].quantile(0.80)
+area_menor50 = df['ÁREA TERRITORIAL DISPONÍVEL'].quantile(0.50)
 
-bairros_2 = (df['TX_ESFORCO'] > 0.8) & (df['MAGNITUDE'] > mediana_magnitude)
+bairros_2 = (df['TAXA DE ESFORÇO'] > 0.8) & (df['MAGNITUDE'] > mediana_magnitude)
 df.loc[bairros_2, 'ESTADOS'] = "ESTADO2"
 
 ainda_vazio = df['ESTADOS'].isna()
 
-bairros_1 = (df['RENDA_MENSAL'] < media_renda) & (df['PREÇO_POR_METRO'] < media_preco) & (df['AREA_TERRITORIAL_DISPONIVEL'] > area_maior85)
+bairros_1 = (df['RENDA MENSAL'] < media_renda) & (df['PREÇO POR METRO QUADRADO'] < media_preco) & (df['ÁREA TERRITORIAL DISPONÍVEL'] > area_maior85)
 df.loc[bairros_1 & ainda_vazio, 'ESTADOS'] = "ESTADO1"
 
-bairros_3 = (df['PREÇO_POR_METRO'] > preco_maior80) & (df['RENDA_MENSAL'] > renda_maior80)
+bairros_3 = (df['PREÇO POR METRO QUADRADO'] > preco_maior80) & (df['RENDA MENSAL'] > renda_maior80)
 df.loc[bairros_3 & ainda_vazio, 'ESTADOS'] = "ESTADO3"
 
 df['ESTADOS'] = df['ESTADOS'].fillna("ESTADO4")
@@ -204,7 +205,7 @@ if st.session_state.pagina == 'home':
             with st.expander("Renda Mensal"):
                 st.info ("Representa o poder de compra médio de um morador comum. O dado é a mediana da renda mensal de moradores de cada bairro, coletada pelo Censo de 2022 " \
                 "e aplicada aos juros de 2026. É o fator de vulnerabilidade social.")
-            with st.expander("Preço por Metro"):
+            with st.expander("Preço por Metro Quadrado"):
                 st.info("Indica o valor de mercado atual da região. Dado coletado após uma análise de mais de 12 mil anúncios de aluguel na cidade do Rio de Janeiro e fazer uma " \
                 "mediana do preço por metro de cada bairro. Esse fator representa o valor simbólico do solo.")
             with st.expander("Pressão Imobiliária"):
@@ -224,7 +225,7 @@ if st.session_state.pagina == 'home':
             with col1:
                 st.subheader(f'Análise: {bairro_alvo}')
                 dados_bairro = df[df['BAIRRO'] == bairro_alvo].iloc[0]
-                st.metric("Probabilidade de Risco Alto", f"{dados_bairro['RISCO_GENTRIFICACAO']}%")
+                st.metric("Probabilidade de Risco Alto", f"{dados_bairro['RISCO DE GENTRIFICAÇÃO']}%")
                 
                 estado_bairro = df.loc[df['BAIRRO'] == bairro_alvo, 'ESTADOS'].values[0]
                 if estado_bairro == "ESTADO1":
@@ -236,9 +237,9 @@ if st.session_state.pagina == 'home':
                 if estado_bairro == "ESTADO4":
                     st.success("BAIRROS ESTÁVEIS")
 
-                st.write(f"Preço por Metro (atualmente): R$ {dados_bairro['PREÇO_POR_METRO']}")
-                st.write(f"Pressão Imobiliária: {dados_bairro['INDICE_DE_PRESSAO']} / 5.0")
-                st.write(f"Taxa de Esforço: {dados_bairro['TX_ESFORCO']:.2f}")
+                st.write(f"Preço por Metro (atualmente): R$ {dados_bairro['PREÇO POR METRO QUADRADO']}")
+                st.write(f"Pressão Imobiliária: {dados_bairro['ÍNDICE DE PRESSÃO']} / 5.0")
+                st.write(f"Taxa de Esforço: {dados_bairro['TAXA DE ESFORÇO']:.2f}")
                 st.write(f"Magnitude do Impacto Imobiliário: {dados_bairro['MAGNITUDE']:.2f} / 5.0")
         
             with col2:
@@ -290,7 +291,11 @@ elif st.session_state.pagina == 'detalhes':
 
             grafico_estados = criar_grafico_radar(df_estados, colunas_radar)
             st.plotly_chart(grafico_estados)
-
+            st.caption("Mediana de todos os bairros dentro de cada grupo para encontrar o grupo modelo de cada estágio")
+            st.write("\t A pós-gentrificação está na liderança do preço por metro, renda mensal e unidades residenciais. O fato mais interessante tirado desse gráfico é a unidade residencial que não está nos fatores diretos que determinam esse estado da gentrificação, porém pode ser considerado um, já que um bairro após passar pela gentrificação vai possuir uma grande quantidade de unidades residenciais por já ter sido um bairro com grande foco imobiliário.\n\n" \
+                     "\t Já no estágio da gentrificação ativa, temos a segunda menor renda mensal e preço por metro do gráfico e a maior taxa de esforço, o que indica que aqui o foco está na retirada dos moradores originais desses bairros , que, junto a liderança no fator de pressão imobiliária, mostra que essa pressão está expulsando seus moradores originais.\n\n" \
+                     "\t Na pré-gentrificação, nós temos o menor número de unidades residenciais do gráfico, com a maior área territorial do gráfico que, juntamente a liderança na magnitude da pressão imobiliária pode atrair o interesse da indústria imobiliária no futuro." \
+                     "\t Já nos bairros estáveis podemos ver todos os fatores são comedidos, com nenhum sendo extremo.")
 
 
         st.divider()
@@ -344,8 +349,17 @@ elif st.session_state.pagina == 'detalhes':
                 with col2:
                     st.subheader("Bairros nesse estado:")
                     bairros4 = df[df['ESTADOS'] == "ESTADO4"]
+                    col1, col2 = st.columns(2)
+                    contagem = df['BAIRRO'].count()
+                    i = 0
                     for bairro in bairros4['BAIRRO']:
-                        st.write(f"- {bairro}")
+                        if i < (contagem / 2):
+                            with col1:
+                                st.write(f"- {bairro}")
+                                i = i + 1
+                        else:
+                            with col2:
+                                st.write(f"- {bairro}")
 
     
     

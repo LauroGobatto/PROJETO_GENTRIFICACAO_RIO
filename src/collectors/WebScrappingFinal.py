@@ -29,8 +29,7 @@ async def scrapper_final():
 
 	df_antigo = pd.read_csv(arquivo_total)
 	df_acumulado = pd.concat([df_antigo, df_precos_bairro]).drop_duplicates()
-	caminho_csv_total = os.path.join('data', 'processed', arquivo_total)
-	df_acumulado.to_csv(caminho_csv_total, index=False)
+	df_acumulado.to_csv(arquivo_total, index=False)
       
 	return 0
 
