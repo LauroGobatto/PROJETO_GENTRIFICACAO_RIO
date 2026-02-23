@@ -25,27 +25,12 @@ for i in arquivos:
     else:
         webscrappingfinal = pd.read_csv(f'data/processed/monthly/PREÇO_POR_BAIRRO_{i}.csv')
     
-    # df_iptu_residencial.columns = df_iptu_residencial.columns.str.strip().str.replace('\ufeff', '')
-    # df_iptu_residencial['nome'] = df_iptu_residencial['nome'].str.strip()
-
-# 2. LIMPEZA BRUTA (O Seguro de Vida)
-# Remove BOM residual, espaços, quebras de linha e converte para minúsculo
-    df_iptu_residencial.columns = [
-        c.encode('ascii', 'ignore').decode('ascii').strip().lower() 
-        for c in df_iptu_residencial.columns
-        ]
-
-    # 3. Verificação (Isso aparecerá no log do seu GitHub Actions)
-    print(f"Colunas detectadas e limpas: {df_iptu_residencial.columns.tolist()}")
-
-    # Agora use 'nome' em minúsculo, já que normalizamos acima:
-    df_iptu_residencial['nome'] = df_iptu_residencial['nome'].str.strip()
-    
-    
     df_iptu_residencial = df_iptu_residencial.rename(columns= {
         'nome': 'BAIRRO',
         'tot_imoveis': 'UNIDADES RESIDENCIAIS'
     })
+    df_iptu_residencial['BAIRRO'] = df_iptu_residencial['BAIRRO'].str.strip()
+
     imoveis_bairro = df_iptu_residencial.groupby('BAIRRO')['UNIDADES RESIDENCIAIS'].sum()
     df_merge_residencial = pd.merge(webscrappingfinal, imoveis_bairro, on='BAIRRO', how='inner')
     df_merge_residencial['ÍNDICE DE PRESSÃO'] = df_merge_residencial['PREÇO POR METRO'] / df_merge_residencial['UNIDADES RESIDENCIAIS']
