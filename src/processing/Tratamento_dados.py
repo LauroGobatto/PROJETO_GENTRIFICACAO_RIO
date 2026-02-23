@@ -16,6 +16,8 @@ for i in arquivos:
         webscrappingfinal = pd.read_csv(f'data/processed/PREÇO_POR_BAIRRO_TOTAL.csv')
     else:
         webscrappingfinal = pd.read_csv(f'data/processed/monthly/PREÇO_POR_BAIRRO_{i}.csv')
+    
+    df_iptu_residencial.columns = [c.replace('\ufeff', '').strip() for c in df_iptu_residencial.columns]
     df_iptu_residencial['nome'] = df_iptu_residencial['nome'].str.strip()
     df_iptu_residencial = df_iptu_residencial.rename(columns= {
         'nome': 'BAIRRO',
@@ -31,7 +33,8 @@ for i in arquivos:
 
 
 
-    df_iptu_territorial = pd.read_csv('data/raw/IPTU_TERRITORIAL.csv')
+    df_iptu_territorial = pd.read_csv('data/raw/IPTU_TERRITORIAL.csv', encoding = 'utf-8-sig')
+    df_iptu_territorial.columns = [c.replace('\ufeff', '').strip() for c in df_iptu_territorial.columns]
     df_iptu_territorial['nome'] = df_iptu_territorial['nome'].str.strip()
     df_iptu_territorial = df_iptu_territorial.rename(columns= {
         'nome': 'BAIRRO',
