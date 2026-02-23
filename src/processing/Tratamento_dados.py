@@ -4,7 +4,15 @@ import os
 from datetime import datetime
 
 
-df_iptu_residencial = pd.read_csv('data/raw/IPTU_RESIDENCIAL.csv', encoding='utf-8-sig', sep=',')
+# df_iptu_residencial = pd.read_csv('data/raw/IPTU_RESIDENCIAL.csv', encoding='utf-8-sig', sep=',')
+
+df_iptu_residencial = pd.read_csv(
+        'data/raw/IPTU_RESIDENCIAL.csv', 
+        encoding='utf-8-sig', 
+        sep=',',
+        skipinitialspace=True  # Remove espaços logo após a vírgula do separador
+    )
+
 mes_ano = datetime.now().strftime('%Y_%m')
 arquivos = ['TOTAL', mes_ano ]
 
@@ -17,8 +25,23 @@ for i in arquivos:
     else:
         webscrappingfinal = pd.read_csv(f'data/processed/monthly/PREÇO_POR_BAIRRO_{i}.csv')
     
-    df_iptu_residencial.columns = df_iptu_residencial.columns.str.strip().str.replace('\ufeff', '')
+    # df_iptu_residencial.columns = df_iptu_residencial.columns.str.strip().str.replace('\ufeff', '')
+    # df_iptu_residencial['nome'] = df_iptu_residencial['nome'].str.strip()
+
+# 2. LIMPEZA BRUTA (O Seguro de Vida)
+# Remove BOM residual, espaços, quebras de linha e converte para minúsculo
+    df_iptu_residencial.columns = [
+        c.encode('ascii', 'ignore').decode('ascii').strip().lower() 
+        for c in df_iptu_residencial.columns
+        ]
+
+    # 3. Verificação (Isso aparecerá no log do seu GitHub Actions)
+    print(f"Colunas detectadas e limpas: {df_iptu_residencial.columns.tolist()}")
+
+    # Agora use 'nome' em minúsculo, já que normalizamos acima:
     df_iptu_residencial['nome'] = df_iptu_residencial['nome'].str.strip()
+    
+    
     df_iptu_residencial = df_iptu_residencial.rename(columns= {
         'nome': 'BAIRRO',
         'tot_imoveis': 'UNIDADES RESIDENCIAIS'
