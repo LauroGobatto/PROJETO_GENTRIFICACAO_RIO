@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 
 
-df_iptu_residencial = pd.read_csv('data/raw/IPTU_RESIDENCIAL.csv')
+df_iptu_residencial = pd.read_csv('data/raw/IPTU_RESIDENCIAL.csv', encoding='utf-8-sig')
 mes_ano = datetime.now().strftime('%Y_%m')
 arquivos = ['TOTAL', mes_ano ]
 
