@@ -86,5 +86,8 @@ df = df.sort_values(by='RISCO ALTO', ascending=False).reset_index(drop = True)
 print("\n--- RADAR DE GENTRIFICAÇÃO (RISCO 2) ---")
 print(df.to_string())
 
-caminho_csv = os.path.join('data', 'processed', 'RISCO DE GENTRIFICAÇÃO.csv')
+diretorio_atual = os.path.dirname(os.path.abspath(__file__)) 
+raiz = os.path.dirname(os.path.dirname(diretorio_atual))
+
+caminho_csv = os.path.join(raiz, 'data', 'processed', 'RISCO DE GENTRIFICAÇÃO.csv')
 df.to_csv(caminho_csv, index= False)

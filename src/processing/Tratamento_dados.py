@@ -7,6 +7,10 @@ from datetime import datetime
 df_iptu_residencial = pd.read_csv('data/raw/IPTU_RESIDENCIAL.csv')
 mes_ano = datetime.now().strftime('%Y_%m')
 arquivos = ['TOTAL', mes_ano ]
+
+diretorio_atual = os.path.dirname(os.path.abspath(__file__)) 
+raiz = os.path.dirname(os.path.dirname(diretorio_atual))
+
 for i in arquivos:
     webscrappingfinal = pd.read_csv(f'data/processed/PREÇO_POR_BAIRRO_{i}.csv')
     df_iptu_residencial['nome'] = df_iptu_residencial['nome'].str.strip()
@@ -54,9 +58,10 @@ for i in arquivos:
 
     df_final['ÍNDICE DE ACESSIBILIDADE'] = (df_final['ÍNDICE DE ACESSIBILIDADE'] * 1).round(2)
     df_final = df_final.sort_values(by= 'ÍNDICE DE ACESSIBILIDADE', ascending= False).reset_index(drop= True)
+    
     if i == 'TOTAL':
-        caminho_csv = os.path.join('data', 'processed', 'BAIRROS_RENDA_TOTAL.csv')
+        caminho_csv = os.path.join(raiz, 'data', 'processed', 'BAIRROS_RENDA_TOTAL.csv')
         df_final.to_csv(caminho_csv, index= False)
     else:
-        caminho_csv = os.path.join('data', 'processed', 'monthly', f'BAIRROS_RENDA_{i}.csv')
+        caminho_csv = os.path.join(raiz, 'data', 'processed', 'monthly', f'BAIRROS_RENDA_{i}.csv')
         df_final.to_csv(caminho_csv, index= False)
