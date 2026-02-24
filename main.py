@@ -16,11 +16,11 @@ if __name__ == "__main__":
     #TRATAMENTO DOS DADOS
     rodar_script('src/processing/Tratamento_dados.py')
 
-    #MODELO
-    rodar_script('src/models/MODELO.py')
-
     #COORDENADAS
     rodar_script('output/scripts_graficos/GRÁFICO_DE_CALOR.py')
+    
+    #MODELO
+    rodar_script('src/models/MODELO.py')
 
     #MIGRAR PARA SQL
     rodar_script('migrar_sql.py')

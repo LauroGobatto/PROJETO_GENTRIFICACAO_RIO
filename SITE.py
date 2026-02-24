@@ -12,17 +12,12 @@ import matplotlib.pyplot as plt
 coordenadas = [-22.9068, -43.1729]
 zoom_inicial = 11
 
-@st.cache_data # Para o site ficar rápido
-def carregar_dados_mapa():
-    return pd.read_csv('data/processed/COORDENADAS.csv')
-
 def gerar_mapa_calor(lat, long, zoom, df):
-    df_mapa = carregar_dados_mapa()
     mapa_rio = folium.Map(
         location= [lat, long], 
         zoom_start= zoom
     )
-    dados_calor = df_mapa[['LATITUDE', 'LONGITUDE', 'RISCO ALTO']].dropna()
+    dados_calor = df[['LATITUDE', 'LONGITUDE', 'RISCO DE GENTRIFICAÇÃO']].dropna()
     HeatMap(
         data= dados_calor,
         radius= 25,
@@ -92,52 +87,6 @@ def criar_grafico_radar(df, categorias):
     )
     return fig
 
-def grafico_slope(df_anterior, df_atual, bairro):
-    """
-    df_anterior: DataFrame do mês passado (ou TOTAL)
-    df_atual: DataFrame do mês novo
-    coluna_valor: Nome da coluna que queremos comparar (ex: 'PREÇO POR METRO', 'TAXA DE ESFORCO', 'INDICE DE PRESSAO')
-    """
-    fig = go.Figure()
-    bairro_ant = df_anterior[df_anterior['BAIRRO'] == bairro].iloc[0]
-    bairro_atu = df_atual[df_atual['BAIRRO'] == bairro].iloc[0]
-
-    categorias = ['PREÇO POR METRO QUADRADO', 'ÍNDICE DE PRESSÃO', 'MAGNITUDE', 'TAXA DE ESFORÇO']
-
-    VERDE = '#4A5E37'
-    LARANJA = '#F2994A'
-    CINZA = '#D3D3D3'
-
-    fig, ax = plt.subplots(figsize=(7, 9))
-
-    for cat in categorias:
-        val_ant = bairro_ant[cat]
-        val_atu = bairro_atu[cat]
-        
-        cor = LARANJA if val_atu > val_ant else VERDE
-
-        # Plota a linha
-        ax.plot([0, 1], [val_ant, val_atu], marker='o', color=cor, linewidth=3, markersize=10)
-        # Rótulos de texto (Mês Anterior)
-        ax.text(-0.05, val_ant, f'{cat}\n{val_ant:.2f}', ha='right', va='center', fontsize=10, color='#333')
-        # Rótulos de texto (Mês Atual)
-        ax.text(1.05, val_atu, f'{val_atu:.2f}', ha='left', va='center', fontsize=11, fontweight='bold', color=cor)
-
-    ax.set_xlim(-0.6, 1.6)
-    ax.set_xticks([0, 1])
-    ax.set_xticklabels(['TOTAL (Base)', 'Mês Atual'], fontsize=12, fontweight='bold')
-    
-    # Título estilizado
-    plt.title(f'Evolução de Gentrificação: {bairro}', fontsize=15, pad=30, fontweight='bold', color=VERDE)
-
-    # Remover eixos desnecessários para um visual limpo (estilo Dashboard)
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
-    ax.spines['left'].set_visible(False)
-    ax.spines['bottom'].set_visible(False)
-    ax.get_yaxis().set_visible(False)
-
-    return fig
 
 if 'bairro' not in st.session_state:
     st.session_state.bairro = None
@@ -153,25 +102,15 @@ def limpar_bairro():
 
 @st.cache_data # Para o site ficar rápido
 def carregar_dados(i):
-    if i == 'TOTAL':
-        conexao = sqlite3.connect(f'data/processed/GENTRIFICACAO_TOTAL.db')
-    else:
-        conexao = sqlite3.connect(f'data/processed/monthly/GENTRIFICACAO_{i}.db')
+    conexao = sqlite3.connect(f'data/processed/GENTRIFICACAO_TOTAL.db')
     query = "SELECT * FROM bairros"
     banco_de_dados = pd.read_sql_query(query, conexao)
     conexao.close()
     return banco_de_dados
 
-df = carregar_dados('TOTAL')
-df_jan = carregar_dados('2026_01')
-df_fev = carregar_dados('2026_02')
-dfs = [df, df_jan, df_fev]
-df_mapa = carregar_dados_mapa()
-for i in dfs:
-    if 'RISCO_GENTRIFICACAO' in i.columns:
-        i.columns = ['BAIRRO', 'PREÇO POR METRO QUADRADO', 'UNIDADES RESIDENCIAIS', 'ÍNDICE DE PRESSÃO', 'ÁREA TERRITORIAL DISPONÍVEL', 'MAGNITUDE', 'RENDA MENSAL', 'TAXA DE ESFORÇO', 'RISCO DE GENTRIFICAÇÃO']
-    else:
-        i.columns = ['BAIRRO', 'PREÇO POR METRO QUADRADO', 'UNIDADES RESIDENCIAIS', 'ÍNDICE DE PRESSÃO', 'ÁREA TERRITORIAL DISPONÍVEL', 'MAGNITUDE', 'RENDA MENSAL', 'TAXA DE ESFORÇO']
+df = carregar_dados()
+
+df.columns = ['BAIRRO', 'PREÇO POR METRO QUADRADO', 'UNIDADES RESIDENCIAIS', 'ÍNDICE DE PRESSÃO', 'ÁREA TERRITORIAL DISPONÍVEL', 'MAGNITUDE', 'RENDA MENSAL', 'TAXA DE ESFORÇO', 'LATITUDE', 'LONGITUDE', 'RISCO DE GENTRIFICAÇÃO']
 
 colunas_radar = ['RENDA MENSAL', 'PREÇO POR METRO QUADRADO', 'TAXA DE ESFORÇO', 'MAGNITUDE', 'ÁREA TERRITORIAL DISPONÍVEL', 'UNIDADES RESIDENCIAIS', 'ÍNDICE DE PRESSÃO']
 df_normalizado = normalizar_dados(df, colunas_radar)
@@ -248,7 +187,7 @@ if st.session_state.pagina == 'home':
     # --- MAPA INTERATIVO (FOLIUM) ---
             st.title("Visualização do Mapa de Calor")
 
-            mapa_rio = gerar_mapa_calor(-22.9068, -43.1729, 11, df_mapa)
+            mapa_rio = gerar_mapa_calor(-22.9068, -43.1729, 11, df)
             st_folium(mapa_rio, width=1200, height=500)
     
             st.subheader("Principais Fatores de Risco")
@@ -299,13 +238,11 @@ if st.session_state.pagina == 'home':
                 st.write(f"Magnitude do Impacto Imobiliário: {dados_bairro['MAGNITUDE']:.2f} / 5.0")
         
             with col2:
-                dados_coordenadas = df_mapa[df_mapa['BAIRRO'] == bairro_alvo].iloc[0]
+                dados_coordenadas = df[df['BAIRRO'] == bairro_alvo].iloc[0]
                 latitude = dados_coordenadas['LATITUDE']
                 longitude = dados_coordenadas['LONGITUDE']
-                mapa_rio = gerar_mapa_calor(latitude, longitude, 14, df_mapa)
+                mapa_rio = gerar_mapa_calor(latitude, longitude, 14, df)
                 st_folium(mapa_rio, width=500, height=500)
-            grafico_bairro = grafico_slope(df_jan, df_fev, bairro_alvo)
-            st.plotly_chart(grafico_bairro)
 
 
     if st.session_state.mostrar_radar == True: 
