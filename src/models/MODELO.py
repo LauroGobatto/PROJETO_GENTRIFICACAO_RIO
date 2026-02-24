@@ -19,7 +19,7 @@ renda_maior85 = df['RENDA MENSAL'].quantile(0.85)
 area_menor50 = df['ÁREA TERRITORIAL DISPONÍVEL'].quantile(0.50)
 
 def rotular_risco(row):
-    if (row['ÍNDICE DE ACESSIBILIDADE'] > 0.8) and (row['SCORE FINAL'] > mediana_score) and (row['ÍNDICE DE PRESSÃO'] > mediana_pressao):
+    if (row['ÍNDICE DE ACESSIBILIDADE'] > 0.9) and (row['SCORE FINAL'] > mediana_score) and (row['ÍNDICE DE PRESSÃO'] > mediana_pressao):
         return 2  # Risco Alto
     elif (row['RENDA MENSAL'] < media_renda) and (row['PREÇO POR METRO'] < media_preco) and (row['ÁREA TERRITORIAL DISPONÍVEL'] > area_maior80):
         return 1  # Risco Médio
@@ -29,7 +29,7 @@ def rotular_risco(row):
 
 df['PROXIMIDADE_RISCO'] = (
     (df['ÍNDICE DE PRESSÃO'] / mediana_pressao) + 
-    (df['ÍNDICE DE ACESSIBILIDADE'] / 0.8) + 
+    (df['ÍNDICE DE ACESSIBILIDADE'] / 0.9) + 
     (df['SCORE FINAL'] / mediana_score)
 ) / 3
 df['PRESSAO_VALORIZACAO'] = df['PREÇO POR METRO'] / (df['RENDA MENSAL'] + 1)
@@ -76,7 +76,7 @@ print(classification_report(y_test, y_pred, zero_division=0))
 
 probabilidades = modelo.predict_proba(features)
 
-df['RISCO ALTO'] = ((probabilidades[:, 1] * 50) + (probabilidades[:, 2] * 100)).round(2)
+df['RISCO ALTO'] = ((probabilidades[:, 1] * 40) + (probabilidades[:, 2] * 110)).round(2)
 
 df = df.drop(columns= ['PROXIMIDADE_RISCO'])
 df = df.drop(columns= ['PRESSAO_VALORIZACAO'])
