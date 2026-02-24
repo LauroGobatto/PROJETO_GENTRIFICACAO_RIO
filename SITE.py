@@ -14,7 +14,7 @@ zoom_inicial = 11
 
 @st.cache_data # Para o site ficar rápido
 def carregar_dados_mapa():
-    return pd.read_csv('data/raw/COORDENADAS.csv')
+    return pd.read_csv('data/processed/COORDENADAS.csv')
 
 def gerar_mapa_calor(lat, long, zoom, df):
     df_mapa = carregar_dados_mapa()
