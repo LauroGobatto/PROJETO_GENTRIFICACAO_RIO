@@ -22,7 +22,7 @@ def gerar_mapa_calor(lat, long, zoom, df):
         location= [lat, long], 
         zoom_start= zoom
     )
-    dados_calor = df[['LATITUDE', 'LONGITUDE', 'RISCO ALTO']].dropna()
+    dados_calor = df_mapa[['LATITUDE', 'LONGITUDE', 'RISCO ALTO']].dropna()
     HeatMap(
         data= dados_calor,
         radius= 25,
