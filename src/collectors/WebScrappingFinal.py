@@ -16,18 +16,19 @@ async def scrapper_final():
 	df_alugueis['PREÇO POR METRO'] = (df_alugueis['PREÇO'] / df_alugueis['ÁREA']).round(1)
 	df_precos_bairro = df_alugueis.groupby('BAIRRO')['PREÇO POR METRO'].median().reset_index()
 	
-	# 1. Definir o nome do mês atual para o arquivo individual
 	mes_ano = datetime.now().strftime('%Y_%m')
 
 	caminho_csv = os.path.join('data', 'processed', 'monthly', f'PREÇO_POR_BAIRRO_{mes_ano}.csv')
 	df_precos_bairro.to_csv(caminho_csv, index=False)
 
-	# 3. ATUALIZAR O TOTAL (Este aqui junta o novo com o que já existia)
 	arquivo_total = 'data/processed/PREÇO_POR_BAIRRO_TOTAL.csv'
 
 	df_antigo = pd.read_csv(arquivo_total)
-	df_acumulado = pd.concat([df_antigo, df_precos_bairro]).drop_duplicates()
-	df_acumulado.to_csv(arquivo_total, index=False)
+	df_acumulado = pd.concat([df_antigo, df_precos_bairro], ignore_index = True)
+      
+      #A MELHOR FORMA DE JUNTAR OS DOIS DADOS É COM UMA MÉDIA, EM VEZ DA MEDIANA
+	df_final = df_acumulado.groupby('BAIRRO')['PREÇO POR METRO'].mean().reset_index()
+	df_final.to_csv(arquivo_total, index=False)
       
 	return 0
 
