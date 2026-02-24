@@ -101,8 +101,8 @@ def limpar_bairro():
     st.session_state.bairro = None
 
 @st.cache_data # Para o site ficar rápido
-def carregar_dados(i):
-    conexao = sqlite3.connect(f'data/processed/GENTRIFICACAO_TOTAL.db')
+def carregar_dados():
+    conexao = sqlite3.connect('data/processed/GENTRIFICACAO_TOTAL.db')
     query = "SELECT * FROM bairros"
     banco_de_dados = pd.read_sql_query(query, conexao)
     conexao.close()
