@@ -6,6 +6,7 @@ from streamlit_folium import st_folium
 import folium
 from folium.plugins import HeatMap
 import plotly.graph_objects as go
+import matplotlib.pyplot as plt
 
 ## MONTAR O MAPA DE CALOR
 coordenadas = [-22.9068, -43.1729]
@@ -90,9 +91,6 @@ def criar_grafico_radar(df, categorias):
             showlegend=True
     )
     return fig
-
-import matplotlib.pyplot as plt
-import pandas as pd
 
 def grafico_slope(df_anterior, df_atual, bairro):
     """
