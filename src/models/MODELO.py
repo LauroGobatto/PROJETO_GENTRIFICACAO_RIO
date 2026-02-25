@@ -12,7 +12,22 @@ import os
 import shap
 
 
-df = pd.read_csv('data/processed/COORDENADAS.csv')
+df_total = pd.read_csv('data/processed/COORDENADAS.csv')
+df_anterior = pd.read_csv('data/processed/monthly/BAIRROS_RENDA_2026_01.csv')
+df_atual = pd.read_csv('data/processed/monthly/BAIRROS_RENDA_2026_02.csv')
+
+df_anterior.rename(columns={
+    'PREÇO POR METRO': 'PREÇO POR METRO ANTERIOR'},
+    inplace= True)
+df_atual.rename(columns={
+    'PREÇO POR METRO': 'PREÇO POR METRO ATUAL'},
+    inplace= True
+)
+
+df_comparacao = pd.merge(df_anterior[['BAIRRO', 'PREÇO POR METRO ANTERIOR']], df_atual[['BAIRRO', 'PREÇO POR METRO ATUAL']], on='BAIRRO', how='inner')
+df_comparacao['VARIAÇÃO DE PREÇO MENSAL'] = ((df_comparacao['PREÇO POR METRO ATUAL'] - df_comparacao['PREÇO POR METRO ANTERIOR']) * 100) / df_comparacao['PREÇO POR METRO ANTERIOR']
+df = pd.merge(df_total, df_comparacao[['BAIRRO', 'VARIAÇÃO DE PREÇO MENSAL']], on='BAIRRO', how= 'left')
+df['VARIAÇÃO DE PREÇO MENSAL'] = df['VARIAÇÃO DE PREÇO MENSAL'].fillna(0)
 
 media_renda = df['RENDA MENSAL'].mean()
 media_preco = df['PREÇO POR METRO'].mean()
@@ -41,7 +56,7 @@ df['RISCO_TARGET'] = df.apply(rotular_risco, axis=1)
 
 y = df['RISCO_TARGET']
 coords = df[['LATITUDE', 'LONGITUDE']]
-features_base = ['PREÇO POR METRO', 'ÍNDICE DE PRESSÃO', 'ÁREA TERRITORIAL DISPONÍVEL', 'RENDA MENSAL', 'ÍNDICE DE ACESSIBILIDADE', 'SCORE FINAL', 'POTENCIAL_TRANSFORMACAO']
+features_base = ['PREÇO POR METRO', 'ÍNDICE DE PRESSÃO', 'ÁREA TERRITORIAL DISPONÍVEL', 'RENDA MENSAL', 'ÍNDICE DE ACESSIBILIDADE', 'SCORE FINAL', 'VARIAÇÃO DE PREÇO MENSAL', 'POTENCIAL_TRANSFORMACAO']
 X = df[features_base]
 X_train, X_test, y_train, y_test, coords_train, coords_test = train_test_split(
     X, y, coords, test_size=0.2, random_state=42, stratify=y
@@ -93,6 +108,7 @@ features_predicao = [
     'RENDA MENSAL', 
     'ÍNDICE DE ACESSIBILIDADE', 
     'SCORE FINAL',
+    'VARIAÇÃO DE PREÇO MENSAL',
     'POTENCIAL_TRANSFORMACAO',
     'RISCO_VIZINHANCA'
 ]
@@ -116,19 +132,16 @@ df.to_csv(caminho_csv, index= False)
 
 background = shap.sample(X_train, 50) 
 
-# 3. O PULO DO GATO: Usar o predict_proba do MODELO PRINCIPAL (que está treinado)
-# Usamos o Lambda para o SHAP não se perder nas classes do sklearn
 model_func = lambda x: modelo.predict_proba(x)
 
-# 4. Criar o explicador
+
 explainer = shap.KernelExplainer(model_func, background)
 
-# 5. Testar com poucas amostras (KernelExplainer é lento)
+
 X_test_sample = X_test.sample(10, random_state=42)
 shap_values = explainer.shap_values(X_test_sample)
 
-# 6. Plotar (Classe 2 = Geralmente 'Risco Alto' em 3 classes)
-# Verifique se shap_values é uma lista (comum no KernelExplainer)
+
 if isinstance(shap_values, list):
     shap.summary_plot(shap_values[2], X_test_sample)
 else:
