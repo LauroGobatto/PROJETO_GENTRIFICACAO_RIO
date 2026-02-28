@@ -129,7 +129,7 @@ features = [
 
 probabilidades = modelo.predict_proba(df[features])
 
-df['RISCO ALTO'] = ((probabilidades[:, 1] * 50) + (probabilidades[:, 2] * 100)).round(2)
+df['RISCO ALTO'] = ((probabilidades[:, 1] * 50) + (probabilidades[:, 2] * 200)).round(2)
 
 df = df.drop(columns= ['POTENCIAL_TRANSFORMACAO'])
 df = df.drop(columns= ['RISCO_TARGET'])
