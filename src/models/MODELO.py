@@ -78,19 +78,19 @@ X_test = X_test.copy()
 X_train['RISCO_VIZINHANCA'] = knn_contagio.predict(coords_train)
 X_test['RISCO_VIZINHANCA'] = knn_contagio.predict(coords_test)
 
-# 3. Normalização para o SHAP não "esmagar" o dado
+
 scaler = MinMaxScaler()
 X_train['RISCO_VIZINHANCA'] = scaler.fit_transform(X_train[['RISCO_VIZINHANCA']])
 X_test['RISCO_VIZINHANCA'] = scaler.transform(X_test[['RISCO_VIZINHANCA']])
 
-# O modelo 'knn_contagio' já foi treinado lá atrás com coords_train e y_train
+
 df['RISCO_VIZINHANCA'] = knn_contagio.predict(df[['LATITUDE', 'LONGITUDE']])
 
-# 2. Aplicar o Scaler (importante: use o scaler que foi fitado no treino!)
+
 df['RISCO_VIZINHANCA'] = scaler.transform(df[['RISCO_VIZINHANCA']])
 
-# Agora o SMOTE vai funcionar sobre dados equilibrados
-smote_custom = SMOTE(random_state=42, k_neighbors=3) 
+
+smote_custom = SMOTE(random_state=42, k_neighbors=2) 
 smote = SMOTETomek(random_state=42, smote=smote_custom)
 
 X_train_res, y_train_res = smote.fit_resample(X_train, y_train)
@@ -126,24 +126,9 @@ features = [
     'VARIAÇÃO DE PREÇO MENSAL', 'POTENCIAL_TRANSFORMACAO', 'RISCO_VIZINHANCA'
 ]
 
-
 probabilidades = modelo.predict_proba(df[features])
 
-df['RISCO ALTO'] = ((probabilidades[:, 1] * 50) + (probabilidades[:, 2] * 200)).round(2)
-
-df = df.drop(columns= ['POTENCIAL_TRANSFORMACAO'])
-df = df.drop(columns= ['RISCO_TARGET'])
-df = df.drop(columns= ['RISCO_VIZINHANCA'])
-
-df = df.sort_values(by='RISCO ALTO', ascending=False).reset_index(drop = True)
-print("\n--- RADAR DE GENTRIFICAÇÃO (RISCO 2) ---")
-print(df.to_string())
-
-diretorio_atual = os.path.dirname(os.path.abspath(__file__)) 
-raiz = os.path.dirname(os.path.dirname(diretorio_atual))
-
-caminho_csv = os.path.join(raiz, 'data', 'processed', 'RISCO DE GENTRIFICAÇÃO.csv')
-df.to_csv(caminho_csv, index= False)
+df['RISCO ALTO'] = ((probabilidades[:, 1] * 50) + (probabilidades[:, 2] * 100)).round(2)
 
 background = shap.sample(X_train, 50) 
 
@@ -161,3 +146,18 @@ if isinstance(shap_values, list):
     shap.summary_plot(shap_values[2], X_test_sample)
 else:
     shap.summary_plot(shap_values[:,:,2], X_test_sample)
+
+
+df = df.drop(columns= ['POTENCIAL_TRANSFORMACAO'])
+df = df.drop(columns= ['RISCO_TARGET'])
+df = df.drop(columns= ['RISCO_VIZINHANCA'])
+
+df = df.sort_values(by='RISCO ALTO', ascending=False).reset_index(drop = True)
+print("\n--- RADAR DE GENTRIFICAÇÃO (RISCO 2) ---")
+print(df.to_string())
+
+diretorio_atual = os.path.dirname(os.path.abspath(__file__)) 
+raiz = os.path.dirname(os.path.dirname(diretorio_atual))
+
+caminho_csv = os.path.join(raiz, 'data', 'processed', 'RISCO DE GENTRIFICAÇÃO.csv')
+df.to_csv(caminho_csv, index= False)
