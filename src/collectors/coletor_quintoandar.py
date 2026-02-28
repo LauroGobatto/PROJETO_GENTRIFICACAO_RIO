@@ -18,7 +18,7 @@ async def scrapper_quintoandar():
 			"Braz de Pina": "Brás de Pina",
 			"Imperial de São Cristóvão": "São Cristóvão",
 			"Todos Os Santos": "Todos os Santos",
-			  "Oswaldo Cruz": "Osvaldo Cruz",
+			"Oswaldo Cruz": "Osvaldo Cruz",
 			"Barra Olímpica": "Barra da Tijuca",
 			"Barra Olimpica": "Barra da Tijuca",
 			"Tubiacanga": "Galeão",
@@ -39,12 +39,12 @@ async def scrapper_quintoandar():
         await pagina.wait_for_load_state("load")
 
 
-        for i in range(370):
+        for i in range(400):
             botao_ver_mais = pagina.get_by_role("button", name="Ver mais")
             try:
                 if await botao_ver_mais.is_visible():
                     await botao_ver_mais.click()
-                    await pagina.wait_for_timeout(6000)
+                    await pagina.wait_for_timeout(8000)
             except:
                 break
 

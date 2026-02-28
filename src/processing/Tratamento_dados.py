@@ -3,14 +3,11 @@ import numpy as np
 import os
 from datetime import datetime
 
-
-# df_iptu_residencial = pd.read_csv('data/raw/IPTU_RESIDENCIAL.csv', encoding='utf-8-sig', sep=',')
-
 df_iptu_residencial = pd.read_csv(
         'data/raw/IPTU_RESIDENCIAL.csv', 
         encoding='utf-8-sig', 
         sep=',',
-        skipinitialspace=True  # Remove espaços logo após a vírgula do separador
+        skipinitialspace=True 
     )
 
 mes_ano = datetime.now().strftime('%Y_%m')
@@ -66,7 +63,7 @@ for i in arquivos:
     df_renda.rename(columns={df_renda.columns[0]: 'BAIRRO'}, inplace=True)
     df_renda.rename(columns={df_renda.columns[11]: 'RENDA MENSAL'}, inplace=True)
     df_renda_bairro = df_renda[['BAIRRO','RENDA MENSAL']].copy()
-    df_renda_bairro['RENDA MENSAL'] = (df_renda_bairro['RENDA MENSAL'] * 1212 * 1.165).round(2)
+    df_renda_bairro['RENDA MENSAL'] = (df_renda_bairro['RENDA MENSAL'] * 1212 * 1.248).round(2)
     df_final = pd.merge(df_merge_territorial, df_renda_bairro, on= "BAIRRO", how='inner')
     df_final['ÍNDICE DE ACESSIBILIDADE'] = ((df_final['PREÇO POR METRO'] * 50) / df_final['RENDA MENSAL'])
 

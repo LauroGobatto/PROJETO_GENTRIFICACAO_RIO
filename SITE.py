@@ -346,7 +346,7 @@ elif st.session_state.pagina == 'detalhes':
                     st.subheader("Bairros nesse estado:")
                     bairros4 = df[df['ESTADOS'] == "ESTADO4"]
                     col1, col2 = st.columns(2)
-                    contagem = df['BAIRRO'].count()
+                    contagem = bairros4['BAIRRO'].count()
                     i = 0
                     for bairro in bairros4['BAIRRO']:
                         if i < (contagem / 2):

@@ -7,6 +7,7 @@ from sklearn.metrics import classification_report
 from sklearn.neighbors import KNeighborsRegressor
 from imblearn.over_sampling import SMOTE
 from imblearn.combine import SMOTETomek
+from sklearn.preprocessing import MinMaxScaler
 from scipy.stats import zscore
 import os
 import shap
@@ -54,24 +55,41 @@ df['POTENCIAL_TRANSFORMACAO'] = (zscore(df['ÍNDICE DE PRESSÃO']) +
 
 df['RISCO_TARGET'] = df.apply(rotular_risco, axis=1)
 
-y = df['RISCO_TARGET']
-coords = df[['LATITUDE', 'LONGITUDE']]
-features_base = ['PREÇO POR METRO', 'ÍNDICE DE PRESSÃO', 'ÁREA TERRITORIAL DISPONÍVEL', 'RENDA MENSAL', 'ÍNDICE DE ACESSIBILIDADE', 'SCORE FINAL', 'VARIAÇÃO DE PREÇO MENSAL', 'POTENCIAL_TRANSFORMACAO']
+features_base = [
+    'PREÇO POR METRO', 'ÍNDICE DE PRESSÃO', 'ÁREA TERRITORIAL DISPONÍVEL', 
+    'RENDA MENSAL', 'ÍNDICE DE ACESSIBILIDADE', 'SCORE FINAL', 
+    'VARIAÇÃO DE PREÇO MENSAL', 'POTENCIAL_TRANSFORMACAO'
+]
+
 X = df[features_base]
+y = df['RISCO_TARGET']
+coords = df[['LATITUDE', 'LONGITUDE'] ]
+
 X_train, X_test, y_train, y_test, coords_train, coords_test = train_test_split(
     X, y, coords, test_size=0.2, random_state=42, stratify=y
 )
 
-knn = KNeighborsRegressor(n_neighbors = 3)
-knn.fit(coords_train, y_train)
+knn_contagio = KNeighborsRegressor(n_neighbors=3)
+knn_contagio.fit(coords_train, y_train)
 
 X_train = X_train.copy()
 X_test = X_test.copy()
 
-X_train['RISCO_VIZINHANCA'] = knn.predict(coords_train)
-X_test['RISCO_VIZINHANCA'] = knn.predict(coords_test)
-df['RISCO_VIZINHANCA'] = knn.predict(df[['LATITUDE', 'LONGITUDE']])
+X_train['RISCO_VIZINHANCA'] = knn_contagio.predict(coords_train)
+X_test['RISCO_VIZINHANCA'] = knn_contagio.predict(coords_test)
 
+# 3. Normalização para o SHAP não "esmagar" o dado
+scaler = MinMaxScaler()
+X_train['RISCO_VIZINHANCA'] = scaler.fit_transform(X_train[['RISCO_VIZINHANCA']])
+X_test['RISCO_VIZINHANCA'] = scaler.transform(X_test[['RISCO_VIZINHANCA']])
+
+# O modelo 'knn_contagio' já foi treinado lá atrás com coords_train e y_train
+df['RISCO_VIZINHANCA'] = knn_contagio.predict(df[['LATITUDE', 'LONGITUDE']])
+
+# 2. Aplicar o Scaler (importante: use o scaler que foi fitado no treino!)
+df['RISCO_VIZINHANCA'] = scaler.transform(df[['RISCO_VIZINHANCA']])
+
+# Agora o SMOTE vai funcionar sobre dados equilibrados
 smote_custom = SMOTE(random_state=42, k_neighbors=3) 
 smote = SMOTETomek(random_state=42, smote=smote_custom)
 
@@ -101,18 +119,15 @@ y_pred = modelo.predict(X_test)
 print("\n--- RELATÓRIO DE DESEMPENHO ---")
 print(classification_report(y_test, y_pred, zero_division=0))
 
-features_predicao = [
-    'PREÇO POR METRO', 
-    'ÍNDICE DE PRESSÃO', 
-    'ÁREA TERRITORIAL DISPONÍVEL', 
-    'RENDA MENSAL', 
-    'ÍNDICE DE ACESSIBILIDADE', 
-    'SCORE FINAL',
-    'VARIAÇÃO DE PREÇO MENSAL',
-    'POTENCIAL_TRANSFORMACAO',
-    'RISCO_VIZINHANCA'
+
+features = [
+    'PREÇO POR METRO', 'ÍNDICE DE PRESSÃO', 'ÁREA TERRITORIAL DISPONÍVEL', 
+    'RENDA MENSAL', 'ÍNDICE DE ACESSIBILIDADE', 'SCORE FINAL', 
+    'VARIAÇÃO DE PREÇO MENSAL', 'POTENCIAL_TRANSFORMACAO', 'RISCO_VIZINHANCA'
 ]
-probabilidades = modelo.predict_proba(df[features_predicao])
+
+
+probabilidades = modelo.predict_proba(df[features])
 
 df['RISCO ALTO'] = ((probabilidades[:, 1] * 50) + (probabilidades[:, 2] * 100)).round(2)
 
