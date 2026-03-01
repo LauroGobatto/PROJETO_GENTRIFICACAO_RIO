@@ -3,7 +3,7 @@ import pandas as pd
 import time
 import os
 
-df_riscos = pd.read_csv('/home/laurogobatto/Projeto_Alugueis/data/processed/BAIRROS_RENDA_TOTAL.csv')
+df_riscos = pd.read_csv('data/processed/BAIRROS_RENDA_TOTAL.csv')
 geolocator = Nominatim(user_agent="meu_projeto_gentrificacao")
 
 coluna_latitude = []
@@ -19,4 +19,4 @@ df_riscos['LATITUDE'] = coluna_latitude
 df_riscos['LONGITUDE'] = coluna_longitude
 
 caminho_csv = os.path.join('data', 'processed', 'COORDENADAS.csv')
-df_riscos.to_csv('/home/laurogobatto/Projeto_Alugueis/data/processed/COORDENADAS.csv', index = False)
+df_riscos.to_csv('data/processed/COORDENADAS.csv', index = False)
