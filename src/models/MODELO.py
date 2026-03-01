@@ -30,6 +30,9 @@ df_comparacao['VARIAÇÃO DE PREÇO MENSAL'] = ((df_comparacao['PREÇO POR METRO
 df = pd.merge(df_total, df_comparacao[['BAIRRO', 'VARIAÇÃO DE PREÇO MENSAL']], on='BAIRRO', how= 'left')
 df['VARIAÇÃO DE PREÇO MENSAL'] = df['VARIAÇÃO DE PREÇO MENSAL'].fillna(0)
 
+scaler = MinMaxScaler()
+df['INDICE_INFORMALIDADE'] = scaler.fit_transform(df[['INDICE_INFORMALIDADE']])
+
 media_renda = df['RENDA MENSAL'].mean()
 media_preco = df['PREÇO POR METRO'].mean()
 area_maior80 = df['ÁREA TERRITORIAL DISPONÍVEL'].quantile(0.80)
@@ -38,6 +41,7 @@ mediana_pressao = df['ÍNDICE DE PRESSÃO'].median()
 preço_maior85 = df['PREÇO POR METRO'].quantile(0.85)
 renda_maior85 = df['RENDA MENSAL'].quantile(0.85)
 area_menor50 = df['ÁREA TERRITORIAL DISPONÍVEL'].quantile(0.50)
+limiar_pobreza = df['RENDA MENSAL'].quantile(0.15)
 
 def rotular_risco(row):
     if (row['ÍNDICE DE ACESSIBILIDADE'] > 0.8) and (row['SCORE FINAL'] > mediana_score) and (row['ÍNDICE DE PRESSÃO'] > mediana_pressao):
@@ -46,6 +50,10 @@ def rotular_risco(row):
         return 1
     elif (row['ÍNDICE DE ACESSIBILIDADE'] > 0.5) and (row['RENDA MENSAL'] < media_renda) and (row['ÁREA TERRITORIAL DISPONÍVEL'] > area_maior80):
         return 1
+    if (row['RENDA MENSAL'] < limiar_pobreza) or (row['SCORE FINAL'] < (mediana_score * 0.7)):
+        return 0  # Desconsidera risco de gentrificação formal)
+    elif (row['INDICE_INFORMALIDADE'] > 0.5):
+        return 0
     else:
         return 0  # Risco Baixo
 
@@ -57,7 +65,7 @@ df['RISCO_TARGET'] = df.apply(rotular_risco, axis=1)
 
 features_base = [
     'PREÇO POR METRO', 'ÍNDICE DE PRESSÃO', 'ÁREA TERRITORIAL DISPONÍVEL', 
-    'RENDA MENSAL', 'ÍNDICE DE ACESSIBILIDADE', 'SCORE FINAL', 
+    'RENDA MENSAL', 'ÍNDICE DE ACESSIBILIDADE', 'SCORE FINAL', 'INDICE_INFORMALIDADE',
     'VARIAÇÃO DE PREÇO MENSAL', 'POTENCIAL_TRANSFORMACAO'
 ]
 
@@ -78,8 +86,6 @@ X_test = X_test.copy()
 X_train['RISCO_VIZINHANCA'] = knn_contagio.predict(coords_train)
 X_test['RISCO_VIZINHANCA'] = knn_contagio.predict(coords_test)
 
-
-scaler = MinMaxScaler()
 X_train['RISCO_VIZINHANCA'] = scaler.fit_transform(X_train[['RISCO_VIZINHANCA']])
 X_test['RISCO_VIZINHANCA'] = scaler.transform(X_test[['RISCO_VIZINHANCA']])
 
@@ -122,7 +128,7 @@ print(classification_report(y_test, y_pred, zero_division=0))
 
 features = [
     'PREÇO POR METRO', 'ÍNDICE DE PRESSÃO', 'ÁREA TERRITORIAL DISPONÍVEL', 
-    'RENDA MENSAL', 'ÍNDICE DE ACESSIBILIDADE', 'SCORE FINAL', 
+    'RENDA MENSAL', 'ÍNDICE DE ACESSIBILIDADE', 'SCORE FINAL', 'INDICE_INFORMALIDADE',
     'VARIAÇÃO DE PREÇO MENSAL', 'POTENCIAL_TRANSFORMACAO', 'RISCO_VIZINHANCA'
 ]
 

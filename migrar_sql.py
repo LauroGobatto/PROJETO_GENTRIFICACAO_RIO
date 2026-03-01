@@ -5,7 +5,7 @@ from datetime import datetime
 mes_ano = datetime.now().strftime('%Y_%m')
 
 df = pd.read_csv('data/processed/RISCO DE GENTRIFICAÇÃO.csv')
-df.columns = ['BAIRRO', 'PREÇO_POR_METRO', 'UNIDADES_RESIDENCIAIS', 'INDICE_DE_PRESSAO', 'AREA_TERRITORIAL_DISPONIVEL', 'MAGNITUDE', 'RENDA_MENSAL', 'TX_ESFORCO','LATITUDE', 'LONGITUDE', 'RISCO_GENTRIFICACAO']
+df.columns = ['BAIRRO', 'PREÇO_POR_METRO', 'UNIDADES_RESIDENCIAIS', 'INDICE_DE_PRESSAO', 'AREA_TERRITORIAL_DISPONIVEL', 'MAGNITUDE', 'INDICE_INFORMALIDADE', 'RENDA_MENSAL', 'TX_ESFORCO','LATITUDE', 'LONGITUDE', 'VARIACAO_DE_PRECO_MENSAL', 'RISCO_GENTRIFICACAO']
 with sqlite3.connect('data/processed/GENTRIFICACAO_TOTAL.db') as conn:
     df.to_sql('bairros', conn, if_exists='replace', index=False)
 

@@ -57,6 +57,33 @@ for i in arquivos:
 
     df_merge_territorial = df_merge_territorial.drop(columns= ['ÁREA_TRATADA'])
 
+    df_favela = pd.read_csv(
+        'data/raw/LIMITE_FAVELAS.csv', 
+        encoding='utf-8-sig', 
+        sep=',',
+    )
+
+    df_bairro_favela = (df_favela.groupby('bairro')['shape_Area'].sum()).reset_index()
+
+    df_bairro_favela.columns = ['BAIRRO', 'AREA_FAVELA_BAIRRO']
+    
+    df_bairro = pd.read_csv(
+        'data/raw/LIMITE_BAIRROS.csv', 
+        encoding='utf-8-sig', 
+        sep=',',
+    )
+    df_bairro = df_bairro[['nome', 'st_areashape']]
+    df_bairro.rename(columns={
+        'nome':'BAIRRO',
+        'st_areashape':'AREA_BAIRRO'
+    }, inplace= True)
+
+    df_merge_bairro = pd.merge(df_bairro, df_bairro_favela, on='BAIRRO', how='left').fillna(0)
+    df_merge_bairro['INDICE_INFORMALIDADE'] = df_merge_bairro['AREA_FAVELA_BAIRRO'] / df_bairro['AREA_BAIRRO']
+    
+    df_merge_favela = pd.merge(df_merge_territorial, df_merge_bairro, on='BAIRRO', how='left').fillna(0)
+    df_merge_favela = df_merge_favela.drop(columns=['AREA_FAVELA_BAIRRO'])
+    df_merge_favela = df_merge_favela.drop(columns=['AREA_BAIRRO'])
 
 
     df_renda = pd.read_csv('data/raw/RENDA_POR_BAIRRO.csv')
@@ -64,7 +91,7 @@ for i in arquivos:
     df_renda.rename(columns={df_renda.columns[11]: 'RENDA MENSAL'}, inplace=True)
     df_renda_bairro = df_renda[['BAIRRO','RENDA MENSAL']].copy()
     df_renda_bairro['RENDA MENSAL'] = (df_renda_bairro['RENDA MENSAL'] * 1212 * 1.248).round(2)
-    df_final = pd.merge(df_merge_territorial, df_renda_bairro, on= "BAIRRO", how='inner')
+    df_final = pd.merge(df_merge_favela, df_renda_bairro, on= "BAIRRO", how='inner')
     df_final['ÍNDICE DE ACESSIBILIDADE'] = ((df_final['PREÇO POR METRO'] * 50) / df_final['RENDA MENSAL'])
 
     df_final['ÍNDICE DE ACESSIBILIDADE'] = (df_final['ÍNDICE DE ACESSIBILIDADE'] * 1).round(2)
