@@ -16,6 +16,11 @@ import shap
 df_total = pd.read_csv('data/processed/COORDENADAS.csv')
 df_anterior = pd.read_csv('data/processed/monthly/BAIRROS_RENDA_2026_01.csv')
 df_atual = pd.read_csv('data/processed/monthly/BAIRROS_RENDA_2026_02.csv')
+df_total.rename(columns={
+    'ÍNDICE DE ACESSIBILIDADE': 'TAXA DE ESFORÇO',
+    'SCORE FINAL': 'MAGNITUDE',
+    },
+    inplace= True)
 
 df_anterior.rename(columns={
     'PREÇO POR METRO': 'PREÇO POR METRO ANTERIOR'},
@@ -36,7 +41,7 @@ df['INDICE_INFORMALIDADE'] = scaler.fit_transform(df[['INDICE_INFORMALIDADE']])
 media_renda = df['RENDA MENSAL'].mean()
 media_preco = df['PREÇO POR METRO'].mean()
 area_maior80 = df['ÁREA TERRITORIAL DISPONÍVEL'].quantile(0.80)
-mediana_score = df['SCORE FINAL'].median()
+mediana_score = df['MAGNITUDE'].median()
 mediana_pressao = df['ÍNDICE DE PRESSÃO'].median()
 preço_maior85 = df['PREÇO POR METRO'].quantile(0.85)
 renda_maior85 = df['RENDA MENSAL'].quantile(0.85)
@@ -44,11 +49,11 @@ area_menor50 = df['ÁREA TERRITORIAL DISPONÍVEL'].quantile(0.50)
 limiar_pobreza = df['RENDA MENSAL'].quantile(0.15)
 
 def rotular_risco(row):
-    if (row['ÍNDICE DE ACESSIBILIDADE'] > 0.8) and (row['SCORE FINAL'] > mediana_score) and (row['ÍNDICE DE PRESSÃO'] > mediana_pressao) and (row['INDICE_INFORMALIDADE'] < 0.6) and (row['PREÇO POR METRO'] > media_preco):
+    if (row['TAXA DE ESFORÇO'] > 0.8) and (row['MAGNITUDE'] > mediana_score) and (row['ÍNDICE DE PRESSÃO'] > mediana_pressao) and (row['INDICE_INFORMALIDADE'] < 0.6) and (row['PREÇO POR METRO'] > media_preco):
         return 2  # Risco Alto
     elif (row['RENDA MENSAL'] < media_renda) and (row['ÍNDICE DE PRESSÃO'] > mediana_pressao) and (row['ÁREA TERRITORIAL DISPONÍVEL'] > area_maior80):
         return 1
-    elif (row['ÍNDICE DE ACESSIBILIDADE'] > 0.4) and (row['RENDA MENSAL'] < media_renda) and (row['ÁREA TERRITORIAL DISPONÍVEL'] > area_maior80):
+    elif (row['TAXA DE ESFORÇO'] > 0.4) and (row['RENDA MENSAL'] < media_renda) and (row['ÁREA TERRITORIAL DISPONÍVEL'] > area_maior80):
         return 1
     if (row['RENDA MENSAL'] < limiar_pobreza) or (row['ÍNDICE DE PRESSÃO'] < (mediana_pressao * 0.7)):
         return 0  # Desconsidera risco de gentrificação formal)
@@ -57,18 +62,14 @@ def rotular_risco(row):
 
 
 df['POTENCIAL_TRANSFORMACAO'] = (zscore(df['ÍNDICE DE PRESSÃO']) + 
-                                zscore(df['ÍNDICE DE ACESSIBILIDADE']) +
-                                zscore(df['SCORE FINAL'])) / 3
+                                zscore(df['TAXA DE ESFORÇO']) +
+                                zscore(df['MAGNITUDE'])) / 3
 
 df['RISCO_TARGET'] = df.apply(rotular_risco, axis=1)
-
-df['PREÇO POR METRO_NOR'] = scaler.fit_transform(df[['PREÇO POR METRO']])
-df['ÍNDICE DE PRESSÃO_NOR'] = scaler.fit_transform(df[['ÍNDICE DE PRESSÃO']])
-df['SCORE FINAL_NOR'] = scaler.fit_transform(df[['PREÇO POR METRO']])
 df['VARIAÇÃO DE PREÇO MENSAL'] = scaler.fit_transform(df[['ÍNDICE DE PRESSÃO']]) 
 
 features_base = [
-    'PREÇO POR METRO', 'ÍNDICE DE PRESSÃO', 'ÍNDICE DE ACESSIBILIDADE', 'SCORE FINAL', 'INDICE_INFORMALIDADE',
+    'PREÇO POR METRO', 'ÍNDICE DE PRESSÃO', 'TAXA DE ESFORÇO', 'MAGNITUDE', 'INDICE_INFORMALIDADE',
     'VARIAÇÃO DE PREÇO MENSAL', 'POTENCIAL_TRANSFORMACAO'
 ]
 
@@ -86,17 +87,17 @@ knn_contagio.fit(coords_train, y_train)
 X_train = X_train.copy()
 X_test = X_test.copy()
 
-X_train['RISCO_VIZINHANCA'] = knn_contagio.predict(coords_train)
-X_test['RISCO_VIZINHANCA'] = knn_contagio.predict(coords_test)
+X_train['OVERFLOW'] = knn_contagio.predict(coords_train)
+X_test['OVERFLOW'] = knn_contagio.predict(coords_test)
 
-X_train['RISCO_VIZINHANCA'] = scaler.fit_transform(X_train[['RISCO_VIZINHANCA']])
-X_test['RISCO_VIZINHANCA'] = scaler.transform(X_test[['RISCO_VIZINHANCA']])
-
-
-df['RISCO_VIZINHANCA'] = knn_contagio.predict(df[['LATITUDE', 'LONGITUDE']])
+X_train['OVERFLOW'] = scaler.fit_transform(X_train[['OVERFLOW']])
+X_test['OVERFLOW'] = scaler.transform(X_test[['OVERFLOW']])
 
 
-df['RISCO_VIZINHANCA'] = scaler.transform(df[['RISCO_VIZINHANCA']])
+df['OVERFLOW'] = knn_contagio.predict(df[['LATITUDE', 'LONGITUDE']])
+
+
+df['OVERFLOW'] = scaler.transform(df[['OVERFLOW']])
 
 
 smote_custom = SMOTE(random_state=42, k_neighbors=3) 
@@ -129,8 +130,8 @@ print("\n--- RELATÓRIO DE DESEMPENHO ---")
 print(classification_report(y_test, y_pred, zero_division=0))
 
 features = [
-    'PREÇO POR METRO', 'ÍNDICE DE PRESSÃO', 'ÍNDICE DE ACESSIBILIDADE', 'SCORE FINAL', 'INDICE_INFORMALIDADE',
-    'VARIAÇÃO DE PREÇO MENSAL', 'POTENCIAL_TRANSFORMACAO', 'RISCO_VIZINHANCA'
+    'PREÇO POR METRO', 'ÍNDICE DE PRESSÃO', 'TAXA DE ESFORÇO', 'MAGNITUDE', 'INDICE_INFORMALIDADE',
+    'VARIAÇÃO DE PREÇO MENSAL', 'POTENCIAL_TRANSFORMACAO', 'OVERFLOW'
 ]
 
 probabilidades = modelo.predict_proba(df[features])
@@ -156,10 +157,7 @@ else:
 
 
 df = df.drop(columns= ['POTENCIAL_TRANSFORMACAO'])
-df = df.drop(columns= ['RISCO_VIZINHANCA'])
-df = df.drop(columns= ['PREÇO POR METRO_NOR'])
-df = df.drop(columns= ['ÍNDICE DE PRESSÃO_NOR'])
-df = df.drop(columns= ['SCORE FINAL_NOR'])
+df = df.drop(columns= ['OVERFLOW'])
 df = df.drop(columns= ['VARIAÇÃO DE PREÇO MENSAL'])
 
 df = df.sort_values(by='RISCO ALTO', ascending=False).reset_index(drop = True)
