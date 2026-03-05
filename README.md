@@ -159,9 +159,3 @@ Os valores SHAP revelam três resultados que desafiam o monitoramento habitacion
 ---
 
 *O pipeline é open source, a metodologia é reproduzível e o dashboard é público. Se este trabalho for útil para sua pesquisa ou para sua cidade, abra uma issue ou entre em contato.*
-
-**Referências teóricas:** Smith (1996) · Harvey (1989) · Marcuse (1985) · Lefebvre (1991) · Abramo (2003) · Santos (1996)
-
----
-
-*O pipeline é open source, a metodologia é reproduzível e o dashboard é público. Se este trabalho for útil para sua pesquisa ou para sua cidade, abra uma issue ou entre em contato.*
