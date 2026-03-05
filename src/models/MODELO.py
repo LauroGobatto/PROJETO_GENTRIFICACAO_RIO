@@ -157,6 +157,10 @@ else:
 
 df = df.drop(columns= ['POTENCIAL_TRANSFORMACAO'])
 df = df.drop(columns= ['RISCO_VIZINHANCA'])
+df = df.drop(columns= ['PREÇO POR METRO_NOR'])
+df = df.drop(columns= ['ÍNDICE DE PRESSÃO_NOR'])
+df = df.drop(columns= ['SCORE FINAL_NOR'])
+df = df.drop(columns= ['VARIAÇÃO DE PREÇO MENSAL'])
 
 df = df.sort_values(by='RISCO ALTO', ascending=False).reset_index(drop = True)
 print("\n--- RADAR DE GENTRIFICAÇÃO (RISCO 2) ---")
