@@ -2,7 +2,7 @@ name: Monitoramento Mensal da Gentrificação no Rio de Janeiro
 
 on:
   schedule:
-    - cron: '0 4 01  * *'
+    - cron: '0 0 01  * *'
   workflow_dispatch:
 
 jobs:

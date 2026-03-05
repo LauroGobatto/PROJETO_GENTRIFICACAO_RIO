@@ -44,28 +44,31 @@ area_menor50 = df['ÁREA TERRITORIAL DISPONÍVEL'].quantile(0.50)
 limiar_pobreza = df['RENDA MENSAL'].quantile(0.15)
 
 def rotular_risco(row):
-    if (row['ÍNDICE DE ACESSIBILIDADE'] > 0.8) and (row['SCORE FINAL'] > mediana_score) and (row['ÍNDICE DE PRESSÃO'] > mediana_pressao):
+    if (row['ÍNDICE DE ACESSIBILIDADE'] > 0.8) and (row['SCORE FINAL'] > mediana_score) and (row['ÍNDICE DE PRESSÃO'] > mediana_pressao) and (row['INDICE_INFORMALIDADE'] < 0.6) and (row['PREÇO POR METRO'] > media_preco):
         return 2  # Risco Alto
     elif (row['RENDA MENSAL'] < media_renda) and (row['ÍNDICE DE PRESSÃO'] > mediana_pressao) and (row['ÁREA TERRITORIAL DISPONÍVEL'] > area_maior80):
         return 1
-    elif (row['ÍNDICE DE ACESSIBILIDADE'] > 0.5) and (row['RENDA MENSAL'] < media_renda) and (row['ÁREA TERRITORIAL DISPONÍVEL'] > area_maior80):
+    elif (row['ÍNDICE DE ACESSIBILIDADE'] > 0.4) and (row['RENDA MENSAL'] < media_renda) and (row['ÁREA TERRITORIAL DISPONÍVEL'] > area_maior80):
         return 1
-    if (row['RENDA MENSAL'] < limiar_pobreza) or (row['SCORE FINAL'] < (mediana_score * 0.7)):
+    if (row['RENDA MENSAL'] < limiar_pobreza) or (row['ÍNDICE DE PRESSÃO'] < (mediana_pressao * 0.7)):
         return 0  # Desconsidera risco de gentrificação formal)
-    elif (row['INDICE_INFORMALIDADE'] > 0.5):
-        return 0
     else:
         return 0  # Risco Baixo
 
 
 df['POTENCIAL_TRANSFORMACAO'] = (zscore(df['ÍNDICE DE PRESSÃO']) + 
-                                zscore(df['ÍNDICE DE ACESSIBILIDADE'])) / 2
+                                zscore(df['ÍNDICE DE ACESSIBILIDADE']) +
+                                zscore(df['SCORE FINAL'])) / 3
 
 df['RISCO_TARGET'] = df.apply(rotular_risco, axis=1)
 
+df['PREÇO POR METRO_NOR'] = scaler.fit_transform(df[['PREÇO POR METRO']])
+df['ÍNDICE DE PRESSÃO_NOR'] = scaler.fit_transform(df[['ÍNDICE DE PRESSÃO']])
+df['SCORE FINAL_NOR'] = scaler.fit_transform(df[['PREÇO POR METRO']])
+df['VARIAÇÃO DE PREÇO MENSAL'] = scaler.fit_transform(df[['ÍNDICE DE PRESSÃO']]) 
+
 features_base = [
-    'PREÇO POR METRO', 'ÍNDICE DE PRESSÃO', 'ÁREA TERRITORIAL DISPONÍVEL', 
-    'RENDA MENSAL', 'ÍNDICE DE ACESSIBILIDADE', 'SCORE FINAL', 'INDICE_INFORMALIDADE',
+    'PREÇO POR METRO', 'ÍNDICE DE PRESSÃO', 'ÍNDICE DE ACESSIBILIDADE', 'SCORE FINAL', 'INDICE_INFORMALIDADE',
     'VARIAÇÃO DE PREÇO MENSAL', 'POTENCIAL_TRANSFORMACAO'
 ]
 
@@ -96,7 +99,7 @@ df['RISCO_VIZINHANCA'] = knn_contagio.predict(df[['LATITUDE', 'LONGITUDE']])
 df['RISCO_VIZINHANCA'] = scaler.transform(df[['RISCO_VIZINHANCA']])
 
 
-smote_custom = SMOTE(random_state=42, k_neighbors=2) 
+smote_custom = SMOTE(random_state=42, k_neighbors=3) 
 smote = SMOTETomek(random_state=42, smote=smote_custom)
 
 X_train_res, y_train_res = smote.fit_resample(X_train, y_train)
@@ -125,10 +128,8 @@ y_pred = modelo.predict(X_test)
 print("\n--- RELATÓRIO DE DESEMPENHO ---")
 print(classification_report(y_test, y_pred, zero_division=0))
 
-
 features = [
-    'PREÇO POR METRO', 'ÍNDICE DE PRESSÃO', 'ÁREA TERRITORIAL DISPONÍVEL', 
-    'RENDA MENSAL', 'ÍNDICE DE ACESSIBILIDADE', 'SCORE FINAL', 'INDICE_INFORMALIDADE',
+    'PREÇO POR METRO', 'ÍNDICE DE PRESSÃO', 'ÍNDICE DE ACESSIBILIDADE', 'SCORE FINAL', 'INDICE_INFORMALIDADE',
     'VARIAÇÃO DE PREÇO MENSAL', 'POTENCIAL_TRANSFORMACAO', 'RISCO_VIZINHANCA'
 ]
 
@@ -155,7 +156,6 @@ else:
 
 
 df = df.drop(columns= ['POTENCIAL_TRANSFORMACAO'])
-df = df.drop(columns= ['RISCO_TARGET'])
 df = df.drop(columns= ['RISCO_VIZINHANCA'])
 
 df = df.sort_values(by='RISCO ALTO', ascending=False).reset_index(drop = True)

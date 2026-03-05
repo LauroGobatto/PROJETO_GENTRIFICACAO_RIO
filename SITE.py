@@ -64,7 +64,7 @@ def criar_grafico_radar(df, categorias):
         polar=dict(
             radialaxis=dict(
                 visible=True,
-                range=[0, 0.8] # Ajuste o range conforme seus dados (ex: 0 a 1 ou 0 a 100)
+                range=[0, 1.0] # Ajuste o range conforme seus dados (ex: 0 a 1 ou 0 a 100)
             )),
         showlegend=True
             )
@@ -86,6 +86,30 @@ def criar_grafico_radar(df, categorias):
             showlegend=True
     )
     return fig
+
+def mostrar_ranking_visual(bairro_selecionado, df, categoria):
+    df = df.sort_values(by=f'{categoria}', ascending=True).reset_index(drop=True)
+    posicao = df[df['BAIRRO'] == bairro_selecionado].index[0] + 1
+    total = len(df)
+    percentual = (posicao / total) * 100
+    
+    # Lógica de cor dinâmica baseada no ranking
+    if percentual <= 40:
+        cor = "#2ecc71" # Verde (Baixo no ranking)
+    elif percentual <= 80:
+        cor = "#f1c40f" # Amarelo (Médio)
+    else:
+        cor = "#e74c3c" # Vermelho (Alto no ranking)
+
+    st.write(f"**{bairro_selecionado}** está na posição **{posicao} de {total}** no ranking de {categoria}.")
+    
+    # Barra de Progresso Customizada
+    st.markdown(f"""
+        <div style="background-color: #eee; border-radius: 10px; width: 100%; height: 15px;">
+            <div style="background-color: {cor}; width: {percentual}%; height: 15px; border-radius: 10px; transition: width 0.5s;">
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
 
 
 if 'bairro' not in st.session_state:
@@ -110,7 +134,7 @@ def carregar_dados():
 
 df = carregar_dados()
 
-df.columns = ['BAIRRO', 'PREÇO POR METRO QUADRADO', 'UNIDADES RESIDENCIAIS', 'ÍNDICE DE PRESSÃO', 'ÁREA TERRITORIAL DISPONÍVEL', 'MAGNITUDE', 'ÍNDICE DE INFORMALIDADE', 'RENDA MENSAL', 'TAXA DE ESFORÇO', 'LATITUDE', 'LONGITUDE', 'VARIAÇÃO DO PREÇO MENSAL', 'RISCO DE GENTRIFICAÇÃO']
+df.columns = ['BAIRRO', 'PREÇO POR METRO QUADRADO', 'UNIDADES RESIDENCIAIS', 'ÍNDICE DE PRESSÃO', 'ÁREA TERRITORIAL DISPONÍVEL', 'MAGNITUDE', 'ÍNDICE DE INFORMALIDADE', 'RENDA MENSAL', 'TAXA DE ESFORÇO', 'LATITUDE', 'LONGITUDE', 'VARIAÇÃO DO PREÇO MENSAL', 'RISCO TARGET', 'RISCO DE GENTRIFICAÇÃO']
 
 colunas_radar = ['RENDA MENSAL', 'PREÇO POR METRO QUADRADO', 'TAXA DE ESFORÇO', 'MAGNITUDE', 'ÁREA TERRITORIAL DISPONÍVEL', 'UNIDADES RESIDENCIAIS', 'ÍNDICE DE PRESSÃO', 'ÍNDICE DE INFORMALIDADE']
 df_normalizado = normalizar_dados(df, colunas_radar)
@@ -124,12 +148,12 @@ preco_maior80 = df['PREÇO POR METRO QUADRADO'].quantile(0.80)
 renda_maior80 = df['RENDA MENSAL'].quantile(0.80)
 area_menor50 = df['ÁREA TERRITORIAL DISPONÍVEL'].quantile(0.50)
 
-bairros_2 = (df['TAXA DE ESFORÇO'] > 0.8) & (df['MAGNITUDE'] > mediana_magnitude)
+bairros_2 = (df['RISCO TARGET'] == 2)
 df.loc[bairros_2, 'ESTADOS'] = "ESTADO2"
 
 ainda_vazio = df['ESTADOS'].isna()
 
-bairros_1 = (df['RENDA MENSAL'] < media_renda) & (df['PREÇO POR METRO QUADRADO'] < media_preco) & (df['ÁREA TERRITORIAL DISPONÍVEL'] > area_maior85)
+bairros_1 = (df['RISCO TARGET'] == 1)
 df.loc[bairros_1 & ainda_vazio, 'ESTADOS'] = "ESTADO1"
 
 bairros_3 = (df['PREÇO POR METRO QUADRADO'] > preco_maior80) & (df['RENDA MENSAL'] > renda_maior80)
@@ -221,7 +245,21 @@ if st.session_state.pagina == 'home':
                 st.subheader(f'Análise: {bairro_alvo}')
                 dados_bairro = df[df['BAIRRO'] == bairro_alvo].iloc[0]
                 st.metric("Probabilidade de Risco Alto", f"{dados_bairro['RISCO DE GENTRIFICAÇÃO']}%")
-                
+
+                st.write(f"#### Preço por Metro (atualmente): R$ {(dados_bairro['PREÇO POR METRO QUADRADO']).round(2)}")
+                grafico = mostrar_ranking_visual(bairro_alvo, df_normalizado, 'PREÇO POR METRO QUADRADO')
+                st.divider()
+                st.write(f"#### Taxa de Esforço: {dados_bairro['TAXA DE ESFORÇO']:.2f}")
+                grafico = mostrar_ranking_visual(bairro_alvo, df_normalizado, 'TAXA DE ESFORÇO')
+                st.divider()
+                st.write(f"#### Pressão Imobiliária: {dados_bairro['ÍNDICE DE PRESSÃO']} / 5.0")
+                grafico = mostrar_ranking_visual(bairro_alvo, df_normalizado, 'ÍNDICE DE PRESSÃO')
+                st.divider()
+                st.write(f"#### Magnitude do Impacto Imobiliário: {dados_bairro['MAGNITUDE']:.2f} / 5.0")
+                grafico = mostrar_ranking_visual(bairro_alvo, df_normalizado, 'MAGNITUDE')
+                st.divider()
+        
+            with col2:
                 estado_bairro = df.loc[df['BAIRRO'] == bairro_alvo, 'ESTADOS'].values[0]
                 if estado_bairro == "ESTADO1":
                     st.warning("PRÉ-GENTRIFICAÇÃO")
@@ -232,12 +270,6 @@ if st.session_state.pagina == 'home':
                 if estado_bairro == "ESTADO4":
                     st.success("BAIRROS ESTÁVEIS")
 
-                st.write(f"Preço por Metro (atualmente): R$ {dados_bairro['PREÇO POR METRO QUADRADO']}")
-                st.write(f"Pressão Imobiliária: {dados_bairro['ÍNDICE DE PRESSÃO']} / 5.0")
-                st.write(f"Taxa de Esforço: {dados_bairro['TAXA DE ESFORÇO']:.2f}")
-                st.write(f"Magnitude do Impacto Imobiliário: {dados_bairro['MAGNITUDE']:.2f} / 5.0")
-        
-            with col2:
                 dados_coordenadas = df[df['BAIRRO'] == bairro_alvo].iloc[0]
                 latitude = dados_coordenadas['LATITUDE']
                 longitude = dados_coordenadas['LONGITUDE']
@@ -325,10 +357,10 @@ elif st.session_state.pagina == 'detalhes':
             if categoria_alvo == "PÓS-GENTRIFICAÇÃO":
                 with col1:
                     st.subheader("PÓS-GENTRIFICAÇÃO")
-                    st.info("É o momento em que o capital decide retornar ao bairro. Quando o diferencial entre o valor atual do solo e o seu valor potencial atinge o ápice, o capital volta para dentro dessas áreas. Para Neil Smith, este estado é uma estratégia econômica deliberada. Ocorre então a transição do valor de uso (moradia popular) para o valor de troca (ativo imobiliário).\n\n " \
-                    "O fator Pressão imobiliária representa a agressividade do reinvestimento. Quando esse fator é alto, indica que a velocidade com que o mercado está tentando converter o solo é maior do que a capacidade do bairro de manter sua estrutura original.\n\n" \
-                    "Já o fator Magnitude da Pressão imobiliária representa o potencial da gentrificação. A gentrificação não é um evento isolado e precisa de escala para ser lucrativa. Bairros com grande magnitude são áreas onde há muita área disponível para lucro com uma grande intenção de compra. Esses bairros terão a paisagem urbana alterada de forma irreversível nos próximos anos.\n\n" \
-                    "A taxa e esforço é o rastro social do projeto. Quando a taxa de esforço chega perto dos 1.0, indica que está havendo uma expulsão do morador original pois a habitação está consumindo boa parte de sua renda, tornando a sua permanência matematicamente impossível.")
+                    st.info("A pós-gentrificação é o estágio que parece, de fora, um caso de sucesso. São bairros caros no sentido mais completo da palavra: preços entre os mais altos da cidade, e moradores com renda suficiente para sustentá-los. " \
+                    "O rent gap foi fechado. Mas a característica mais reveladora desse estágio é o que está ausente. Não há terra disponível. O território está completamente construído e adensado.\n\n " \
+                    "Não há assentamentos informais dentro dos limites, ou quase nenhum: a cidade formal fechou sobre eles. Santos (1996) chamou esse tipo de espaço de ilha técnica, um território cuja infraestrutura é calibrada para reproduzir a acumulação de capital, e não para servir ao tecido social da cidade. " \
+                    "As altas taxas de condomínio, a segurança privatizada, o comércio de nicho: não são amenidades. São mecanismos de filtragem que garantem que os novos moradores também não sejam deslocados por quem não puder pagar pela versão da cidade que está sendo produzida ali.")
                 with col2:
                     st.subheader("Bairros nesse estado:")
                     bairros3 = df[df['ESTADOS'] == "ESTADO3"]
@@ -338,10 +370,10 @@ elif st.session_state.pagina == 'detalhes':
             if categoria_alvo == "ESTÁVEIS":
                 with col1:
                     st.subheader("ESTÁVEIS")
-                    st.success("É o momento em que o capital decide retornar ao bairro. Quando o diferencial entre o valor atual do solo e o seu valor potencial atinge o ápice, o capital volta para dentro dessas áreas. Para Neil Smith, este estado é uma estratégia econômica deliberada. Ocorre então a transição do valor de uso (moradia popular) para o valor de troca (ativo imobiliário).\n\n " \
-                    "O fator Pressão imobiliária representa a agressividade do reinvestimento. Quando esse fator é alto, indica que a velocidade com que o mercado está tentando converter o solo é maior do que a capacidade do bairro de manter sua estrutura original.\n\n" \
-                    "Já o fator Magnitude da Pressão imobiliária representa o potencial da gentrificação. A gentrificação não é um evento isolado e precisa de escala para ser lucrativa. Bairros com grande magnitude são áreas onde há muita área disponível para lucro com uma grande intenção de compra. Esses bairros terão a paisagem urbana alterada de forma irreversível nos próximos anos.\n\n" \
-                    "A taxa e esforço é o rastro social do projeto. Quando a taxa de esforço chega perto dos 1.0, indica que está havendo uma expulsão do morador original pois a habitação está consumindo boa parte de sua renda, tornando a sua permanência matematicamente impossível.")
+                    st.success("Os bairros estáveis são aqueles que o modelo alcança por eliminação. Não são pobres o suficiente para atrair o interesse especulativo sobre sua terra. " \
+                    "Não estão sob pressão suficiente para estar em processo ativo de conversão. Não são caros o suficiente, nem seus moradores ricos o suficiente, para ter completado o ciclo.\n\n " \
+                    "Existem em um equilíbrio provisório: moradores gastando uma parcela razoável da renda com moradia, o mercado imobiliário presente mas não agressivo, o tecido urbano misto e sem grandes destaques. " \
+                    "Nada aqui está em um ponto de inflexão. Equilíbrio não é uma condição protegida em uma cidade com os níveis de pressão especulativa do Rio. É, mais precisamente, o estágio anterior à chegada dessa pressão.")
                 with col2:
                     st.subheader("Bairros nesse estado:")
                     bairros4 = df[df['ESTADOS'] == "ESTADO4"]
